@@ -1,0 +1,26 @@
+<html>
+
+<head>
+    <title>2D Golf Game</title>
+    <link rel="stylesheet" type="text/css" href="./index.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <button id="train">Train AI</button>
+    <button id="evaluate">Evaluate AI</button>
+    <div id="training-modal" class="modal">
+        <div class="modal__content">
+            <h1>Training<div class="spinner">
+                    <div class="bounce1"></div>
+                    <div class="bounce2"></div>
+                    <div class="bounce3"></div>
+                </div>
+            </h1>
+        </div>
+    </div>
+    <script src="/index.js"></script>
+</body>
+
+</html>

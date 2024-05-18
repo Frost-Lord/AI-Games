@@ -1,10 +1,10 @@
-function nextGeneration() {
+function nextGeneration(distanceToHole) {
   console.log('Next Generation');
   calculateFitness();
   let newBalls = [];
   for (let i = 0; i < TOTAL; i++) {
-    let newBall = pickOne();
-    newBall.resetPosition(64, canvas.height / 2);
+    let newBall = pickOne(distanceToHole);
+    newBall.resetPosition(canvas.width / 2, canvas.height / 2);
     newBalls.push(newBall);
   }
   balls = newBalls;
@@ -16,8 +16,7 @@ function nextGeneration() {
   generation++;
 }
 
-
-function pickOne() {
+function pickOne(distanceToHole) {
   let index = 0;
   let r = Math.random();
   while (r > 0 && index < savedBalls.length) {
@@ -27,6 +26,7 @@ function pickOne() {
   index--;
   let ball = savedBalls[index];
   let child = new Ball(ball.brain);
+  child.spawnToHoleDistance = distanceToHole;
   child.mutate();
   return child;
 }
@@ -37,6 +37,6 @@ function calculateFitness() {
     sum += ball.score;
   }
   for (let ball of savedBalls) {
-    ball.fitness = ball.score / sum;
+    ball.fitness = ball.score;
   }
 }

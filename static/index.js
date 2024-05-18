@@ -8,6 +8,7 @@ let counter = 0;
 let slider;
 let generation = 0;
 let hole;
+var distanceToHole;
 
 function keyPressed(event) {
   if (event.key === "S") {
@@ -19,10 +20,17 @@ function keyPressed(event) {
 function setup() {
   canvas.width = 800;
   canvas.height = 800;
-  slider = document.getElementById("speedSlider"); // Assuming you have a slider with this ID in your HTML
-  hole = { x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: 15 };
+  slider = document.getElementById("speedSlider");
+  hole = {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    radius: 15,
+  };
+  distanceToHole = Math.sqrt(Math.abs(64 - hole.x)**2 + Math.abs(canvas.height / 2 - hole.y)**2);
+  console.log("DISTANCE TO HOLE: " + distanceToHole);
   for (let i = 0; i < TOTAL; i++) {
     balls[i] = new Ball();
+    balls[i].spawnToHoleDistance = distanceToHole;
   }
   requestAnimationFrame(draw);
 }
@@ -49,7 +57,7 @@ function draw() {
   ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2, true);
   ctx.fill();
 
-  balls.forEach(ball => {
+  balls.forEach((ball) => {
     ball.show(ctx);
     ball.think(hole);
     if (!ball.alive || ball.movesLeft <= 0) {
@@ -57,10 +65,10 @@ function draw() {
     }
   });
 
-  balls = balls.filter(ball => ball.alive && ball.movesLeft > 0);
+  balls = balls.filter((ball) => ball.alive && ball.movesLeft > 0);
 
   if (balls.length === 0) {
-    nextGeneration();
+    nextGeneration(distanceToHole);
   }
   requestAnimationFrame(draw);
   displayTopBalls();

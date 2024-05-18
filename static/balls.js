@@ -1,19 +1,24 @@
 class Ball {
   constructor(brain) {
     this.y = canvas.height / 2;
-    this.x = 64;
+    this.x = canvas.width / 2;
     this.radius = 16;
     this.gravity = 0.6;
 
     this.score = 0;
     this.fitness = 0;
-    this.movesLeft = 3;
+    this.movesLeft = 4;
     this.alive = true;
+
+    this.direction = 0;
+    this.power = 0;
+
+    this.spawnToHoleDistance = 0;
 
     if (brain) {
       this.brain = brain.copy();
     } else {
-      this.brain = new NeuralNetwork(4, 8, 2);
+      this.brain = new NeuralNetwork(7, 10, 2);
     }
   }
 
@@ -32,31 +37,28 @@ class Ball {
   move(output) {
     if (!this.alive || this.movesLeft <= 0) return;
 
-    const direction = (output[0] * 360) % 360;
-    const power = output[1] * 100;
-    const angleInRadians = direction * (Math.PI / 180);
+    const direction = output[0] * 360; // 0 -> 360 
+    const power = output[1] * 50;
+    //const Rpower = Math.min(100, distanceToHoleFromBall * power);
+    const directionRad = direction * Math.PI / 180;
 
-    const velocityX = Math.cos(angleInRadians) * power;
-    const velocityY = Math.sin(angleInRadians) * power;
+    const velocityX = Math.cos(directionRad) * power;
+    const velocityY = Math.sin(directionRad) * power;
 
-    console.log(`Direction: ${direction}, Power: ${power}, VelocityX: ${velocityX}, VelocityY: ${velocityY}`);
+    this.x += velocityX;
+    this.y += velocityY;
 
-    if (this.x === undefined) this.x = 0;
-    if (this.y === undefined) this.y = 0;
-    if (this.velocityX === undefined) this.velocityX = 0;
-    if (this.velocityY === undefined) this.velocityY = 0;
+    const distanceToHoleFromBall = this.getDistanceToHole();
 
-    this.velocityX += velocityX;
-    this.velocityY += velocityY;
+    console.log(`Direction: ${direction}, Power: ${power}`);
 
-    if (this.gravity !== undefined) {
-      this.velocityY += this.gravity;
+    console.log(distanceToHoleFromBall, this.spawnToHoleDistance);
+    let percentToHole = (1 - distanceToHoleFromBall / this.spawnToHoleDistance);
+    this.score = percentToHole;
+    if (this.score < 0) {
+      this.score = 0;
     }
-
-    this.x += this.velocityX;
-    this.y += this.velocityY;
-
-    this.score = Math.max(this.score, 1 / this.getDistanceToHole());
+    console.log(this.score);
 
     this.movesLeft--;
     if (this.offScreen()) {
@@ -69,16 +71,20 @@ class Ball {
   }
 
   getDistanceToHole() {
-    return Math.sqrt((this.x - hole.x) ** 2 + (this.y - hole.y) ** 2);
+    return Math.sqrt(Math.abs(this.x - hole.x)**2 + Math.abs(this.y - hole.y)**2);
   }
 
   think(hole) {
     if (!this.alive || this.movesLeft <= 0) return;
     let inputs = [];
-    inputs[0] = this.y / canvas.height;
-    inputs[1] = this.x / canvas.width;
-    inputs[2] = hole.x / canvas.width;
-    inputs[3] = hole.y / canvas.height;
+    inputs[0] = hole.x;
+    inputs[1] = hole.y;
+    inputs[2] = this.x;
+    inputs[3] = this.y;
+    inputs[4] = this.score;
+    inputs[5] = this.direction;
+    inputs[6] = this.power;
+
     let output = this.brain.predict(inputs);
     this.move(output);
   }
@@ -90,7 +96,7 @@ class Ball {
   resetPosition(x, y) {
     this.x = x;
     this.y = y;
-    this.movesLeft = 3;
+    this.movesLeft = 4;
     this.alive = true;
   }
 }

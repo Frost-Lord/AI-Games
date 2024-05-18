@@ -10,14 +10,14 @@ const spawnX = canvas.width / 2 - 350;
 const spawnY = canvas.height / 2;
 
 if (balls.length === 0) {
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
         const ball = new Ball(spawnX, spawnY, 10);
         ball.initializeBrain();
         balls.push(ball);
     }
 }
 
-let hole = { x: 700, y: Math.random() * canvas.height, radius: 15 };
+let hole = { x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: 15 };
 
 const matrixWidth = 20;
 const matrixHeight = 20;
@@ -30,27 +30,6 @@ let currentGameID = levelID;
 
 let generation = 0;
 const log = [];
-
-function updateMatrix() {
-    matrix = matrix.map(row => row.fill(-1));
-
-    balls.forEach(ball => {
-        const ballMatrixPos = {
-            x: Math.floor(ball.x / (canvas.width / matrixWidth)),
-            y: Math.floor(ball.y / (canvas.height / matrixHeight))
-        };
-
-        if (ballMatrixPos.x >= 0 && ballMatrixPos.x < matrixWidth && ballMatrixPos.y >= 0 && ballMatrixPos.y < matrixHeight) {
-            matrix[ballMatrixPos.y][ballMatrixPos.x] = 0;
-        }
-    });
-
-    const holeMatrixPos = {
-        x: Math.floor(hole.x / (canvas.width / matrixWidth)),
-        y: Math.floor(hole.y / (canvas.height / matrixHeight))
-    };
-    matrix[holeMatrixPos.y][holeMatrixPos.x] = 1;
-}
 
 const colors = ["#98e251", "#6cbd37"];
 
@@ -118,14 +97,11 @@ async function update() {
     if (ballsMoved) {
         draw();
     }
-
-    updateMatrix();
     requestAnimationFrame(update);
 }
 
 async function nextGeneration() {
-    await Evaluation();
-    balls = await Selection(balls);
+    balls = await Evaluation(balls);
     balls.forEach(ball => ball.resetPosition(spawnX, spawnY));
     logGeneration();
     generation++;
@@ -155,7 +131,8 @@ function logGeneration() {
     console.log('--------------------------------------');
     console.log(`Generation ${generation}`, log[log.length - 1]);
     console.log('--------------------------------------');
-    hole = { x: 700, y: Math.random() * canvas.height, radius: 15 };
+    hole = { x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: 15 };
+
 }
 
 tf.setBackend('webgl').then(() => {

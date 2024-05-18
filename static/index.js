@@ -1,5 +1,5 @@
-let canvas = document.getElementById("gameCanvas");
-let ctx = canvas.getContext("2d");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
 function generateLevelID() {
     return Math.random().toString(36).substring(2, 8);
@@ -19,27 +19,23 @@ if (balls.length === 0) {
 
 let hole = { x: 700, y: Math.random() * canvas.height, radius: 15 };
 
-let matrixWidth = 20;
-let matrixHeight = 20;
+const matrixWidth = 20;
+const matrixHeight = 20;
 
-let matrix = new Array(matrixHeight).fill(0).map(() => new Array(matrixWidth).fill('#'));
+let matrix = Array.from({ length: matrixHeight }, () => Array(matrixWidth).fill('#'));
 
-let gameStates = [];
-let levelID = generateLevelID();
+const gameStates = [];
+const levelID = generateLevelID();
 let currentGameID = levelID;
 
 let generation = 0;
-let log = [];
+const log = [];
 
 function updateMatrix() {
-    matrix.forEach((row, i) => {
-        row.forEach((cell, j) => {
-            matrix[i][j] = -1;
-        });
-    });
+    matrix = matrix.map(row => row.fill(-1));
 
     balls.forEach(ball => {
-        let ballMatrixPos = {
+        const ballMatrixPos = {
             x: Math.floor(ball.x / (canvas.width / matrixWidth)),
             y: Math.floor(ball.y / (canvas.height / matrixHeight))
         };
@@ -49,21 +45,20 @@ function updateMatrix() {
         }
     });
 
-    let holeMatrixPos = {
+    const holeMatrixPos = {
         x: Math.floor(hole.x / (canvas.width / matrixWidth)),
         y: Math.floor(hole.y / (canvas.height / matrixHeight))
     };
     matrix[holeMatrixPos.y][holeMatrixPos.x] = 1;
 }
 
-let colors = ["#98e251", "#6cbd37"];
+const colors = ["#98e251", "#6cbd37"];
 
 function draw() {
-    let cellWidth = canvas.width / matrixWidth;
-    let cellHeight = canvas.height / matrixHeight;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    const cellWidth = canvas.width / matrixWidth;
+    const cellHeight = canvas.height / matrixHeight;
     for (let i = 0; i < matrixWidth; i++) {
         for (let j = 0; j < matrixHeight; j++) {
             ctx.fillStyle = colors[(i + j) % 2];
@@ -76,22 +71,56 @@ function draw() {
     ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2, true);
     ctx.fill();
 
+    ctx.fillStyle = 'blue';
     balls.forEach(ball => {
-        ctx.fillStyle = 'blue';
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2, true);
         ctx.fill();
     });
+
+    displayTopBalls();
+    updateGenerationNumber();
+}
+
+function displayTopBalls() {
+    const topBallsContainer = document.getElementById('top-balls');
+    topBallsContainer.innerHTML = '';
+
+    balls.slice(0, 5).forEach((ball, index) => {
+        const ballInfo = document.createElement('div');
+        ballInfo.classList.add('ball-info');
+        ballInfo.innerHTML = `
+            <div>Rank: ${index + 1}</div>
+            <div>UUID: ${ball.UUID}</div>
+            <div>Position: (${ball.x.toFixed(2)}, ${ball.y.toFixed(2)})</div>
+            <div>Points: ${parseFloat(ball.points).toFixed(2)}</div>
+        `;
+        topBallsContainer.appendChild(ballInfo);
+    });
+}
+
+function updateGenerationNumber() {
+    const generationNumberElement = document.getElementById('generation-number');
+    generationNumberElement.textContent = generation;
 }
 
 async function update() {
-    for (let ball of balls) {
+    let ballsMoved = false;
+
+    for (const ball of balls) {
         await ball.move();
         ball.updatePosition();
+        if (ball.vx !== 0 || ball.vy !== 0) {
+            ballsMoved = true;
+        }
     }
 
-    draw();
+    if (ballsMoved) {
+        draw();
+    }
+
     updateMatrix();
+    requestAnimationFrame(update);
 }
 
 async function nextGeneration() {
@@ -130,6 +159,6 @@ function logGeneration() {
 }
 
 tf.setBackend('webgl').then(() => {
-    setInterval(update, 1000 / 60);
+    requestAnimationFrame(update);
     setInterval(nextGeneration, 5000);
 });

@@ -1,4 +1,4 @@
-class Ball {
+class Car {
   constructor(brain) {
     this.y = canvas.height / 2;
     this.x = canvas.width / 2;

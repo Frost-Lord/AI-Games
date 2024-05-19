@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "golf": "node index.js",
+    "car": "node car.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

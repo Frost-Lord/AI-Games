@@ -61,7 +61,6 @@ class NeuralNetwork {
       const xs = tf.tensor2d([inputs]);
       const ys = this.model.predict(xs);
       const outputs = ys.dataSync();
-      //console.log(`NN Output: ${outputs}`);
       return outputs;
     });
   }
@@ -72,7 +71,7 @@ class NeuralNetwork {
       tf.layers.dense({
         units: this.hidden_nodes,
         inputShape: [this.input_nodes],
-        activation: "relu",
+        activation: "sigmoid",
       })
     );
     model.add(
@@ -83,10 +82,78 @@ class NeuralNetwork {
     );
     model.compile({
       optimizer: 'adam',
-      loss: 'meanSquaredError',
+      loss: 'meanSquaredError'
     });
     return model;
   }
+}
+
+async function createModel() {
+  const model = tf.sequential();
+
+  // Input layer
+  model.add(
+    tf.layers.dense({
+      units: 16,
+      inputShape: [4],
+      activation: "relu",
+    })
+  );
+
+  model.add(
+    tf.layers.dense({
+      units: 32,
+      activation: "relu",
+    })
+  );
+
+  model.add(
+    tf.layers.dense({
+      units: 16,
+      activation: "relu",
+    })
+  );
+
+  model.add(
+    tf.layers.dense({
+      units: 2,
+      activation: "linear",
+    })
+  );
+
+  model.compile({
+    optimizer: tf.train.adam(0.001),
+    loss: 'meanSquaredError'
+  });
+
+  return model;
+}
+
+
+async function trainModel(inputs, outputs) {
+  const model = await createModel();
+  const xs = tf.tensor2d(inputs);
+  const ys = tf.tensor2d(outputs); 
+  const allCallbacks = {
+    // onTrainBegin: log => console.log(log),
+    // onTrainEnd: log => console.log(log),
+    // onEpochBegin: (epoch, log) => console.log(epoch, log),
+    onEpochEnd: (epoch, log) => console.log(epoch, log)
+    // onBatchBegin: (batch, log) => console.log(batch, log),
+    // onBatchEnd: (batch, log) => console.log(batch, log)
+  };
+  await model.fit(xs, ys, { 
+    epochs: 100,
+    shuffle: true,
+    batchSize: 32,
+    callbacks: allCallbacks
+  });
+  await model.save("localstorage://model");
+}
+
+async function loadModel() {
+  const model = await tf.loadLayersModel("localstorage://model");
+  return model;
 }
 
 function random() {

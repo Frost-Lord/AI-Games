@@ -1,42 +1,52 @@
-function nextGeneration(distanceToHole) {
+function nextGeneration() {
   console.log('Next Generation');
   calculateFitness();
-  let newBalls = [];
+  let newCars = [];
   for (let i = 0; i < TOTAL; i++) {
-    let newBall = pickOne(distanceToHole);
-    newBall.resetPosition(canvas.width / 2, canvas.height / 2);
-    newBalls.push(newBall);
+    let newCar = pickOne();
+    newCar.resetPosition(600, 150);
+    newCars.push(newCar);
   }
-  balls = newBalls;
+  cars = newCars;
 
-  for (let i = 0; i < savedBalls.length; i++) {
-    savedBalls[i].dispose();
+  for (let i = 0; i < savedCars.length; i++) {
+    savedCars[i].dispose();
   }
-  savedBalls = [];
+  savedCars = [];
   generation++;
 }
 
-function pickOne(distanceToHole) {
+function pickOne() {
   let index = 0;
-  let r = Math.random();
-  while (r > 0 && index < savedBalls.length) {
-    r = r - savedBalls[index].fitness;
+  let r = random();
+  while (r > 0 && index < savedCars.length) {
+    r = r - savedCars[index].fitness;
     index++;
   }
   index--;
-  let ball = savedBalls[index];
-  let child = new Ball(ball.brain);
-  child.spawnToHoleDistance = distanceToHole;
+  let car = savedCars[index];
+  let child = new Car(car.brain);
   child.mutate();
   return child;
 }
 
 function calculateFitness() {
   let sum = 0;
-  for (let ball of savedBalls) {
-    sum += ball.score;
+  for (let car of savedCars) {
+    sum += car.score;
   }
-  for (let ball of savedBalls) {
-    ball.fitness = ball.score;
+  for (let car of savedCars) {
+    car.fitness = car.score;
   }
+}
+
+function random() {
+  return Math.random();
+}
+
+function randomGaussian() {
+  let u = 0, v = 0;
+  while (u === 0) u = Math.random();
+  while (v === 0) v = Math.random();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }

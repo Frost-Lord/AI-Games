@@ -17,19 +17,19 @@ body {
   align-items: center;
 }
 
-#top-balls-container {
+#top-cars-container {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-#top-balls {
+#top-cars {
   display: flex;
   align-items: center;
   margin-top: 10px;
 }
 
-#top-balls .ball-info {
+#top-cars .car-info {
   background-color: #444;
   color: #fff;
   padding: 5px;

@@ -40,7 +40,7 @@ class NeuralNetwork {
         let shape = weights[i].shape;
         let values = tensor.dataSync().slice();
         for (let j = 0; j < values.length; j++) {
-          if (random() < rate) {
+          if (random(1) < rate) {
             let w = values[j];
             values[j] = w + randomGaussian();
           }
@@ -61,42 +61,23 @@ class NeuralNetwork {
       const xs = tf.tensor2d([inputs]);
       const ys = this.model.predict(xs);
       const outputs = ys.dataSync();
-      //console.log(`NN Output: ${outputs}`);
       return outputs;
     });
   }
 
   createModel() {
     const model = tf.sequential();
-    model.add(
-      tf.layers.dense({
-        units: this.hidden_nodes,
-        inputShape: [this.input_nodes],
-        activation: "relu",
-      })
-    );
-    model.add(
-      tf.layers.dense({
-        units: this.output_nodes,
-        activation: "linear",
-      })
-    );
-    model.compile({
-      optimizer: 'adam',
-      loss: 'meanSquaredError',
+    const hidden = tf.layers.dense({
+      units: this.hidden_nodes,
+      inputShape: [this.input_nodes],
+      activation: 'sigmoid'
     });
+    model.add(hidden);
+    const output = tf.layers.dense({
+      units: this.output_nodes,
+      activation: 'softmax'
+    });
+    model.add(output);
     return model;
   }
-}
-
-function random() {
-  return Math.random();
-}
-
-function randomGaussian() {
-  let u = 0,
-    v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }

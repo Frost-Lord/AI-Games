@@ -1,27 +1,35 @@
 class Car {
   constructor(brain) {
-    this.y = canvas.height / 2;
-    this.x = canvas.width / 2;
+    this.y = 150;
+    this.x = 600;
     this.radius = 16;
-    this.gravity = 0.6;
 
     this.score = 0;
     this.fitness = 0;
-    this.movesLeft = 2;
     this.alive = true;
 
-    this.direction = 0;
-    this.power = 0;
+    this.previousX = this.x;
+    this.previousY = this.y;
+    this.distanceTraveled = 0;
 
-    this.previousDirection = 0;
-    this.previousPower = 0;
-
-    this.spawnToHoleDistance = 0;
+    this.outerTrack = {
+      left: 50,
+      right: 1150,
+      top: 100,
+      bottom: 700
+    };
+    this.trackWidth = 100;
+    this.innerTrack = {
+      left: this.outerTrack.left + this.trackWidth,
+      right: this.outerTrack.right - this.trackWidth,
+      top: this.outerTrack.top + this.trackWidth,
+      bottom: this.outerTrack.bottom - this.trackWidth
+    };
 
     if (brain) {
       this.brain = brain.copy();
     } else {
-      this.brain = new NeuralNetwork(9, 10, 2);
+      this.brain = new NeuralNetwork(3, 10, 2);
     }
   }
 
@@ -33,92 +41,87 @@ class Car {
     if (!this.alive) return;
     ctx.fillStyle = 'blue';
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+    ctx.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
     ctx.fill();
   }
 
-  map(value, start1, stop1, start2, stop2) {
-    return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
-  }
-  
   move(output) {
-    if (!this.alive || this.movesLeft <= 0) return;
+    if (!this.alive) return;
 
-    const direction = this.map(output[0], 0, 1, 0, 360); // 0 -> 360
-    const power = this.map(output[1], 0, 1, 0, 25); // Adjusted power scaling to be smaller
+    const left = output[0];
+    const right = output[1];
 
-    console.log(`Direction: ${direction}, Power: ${power}`);
-    
-    const directionRad = Math.abs(direction) * (Math.PI / 180);
-    const velocityX = Math.cos(directionRad) * power;
-    const velocityY = Math.sin(directionRad) * power;
+    this.x += (right - left) * 100;
+    this.y += (1 - Math.abs(right - left)) * 100;
 
-    this.x += velocityX;
-    this.y += velocityY;
+    const distance = Math.sqrt(
+      (this.x - this.previousX) ** 2 + (this.y - this.previousY) ** 2
+    );
 
-    this.movesLeft--;
-    if (this.offScreen()) {
+    this.distanceTraveled += distance;
+
+    this.previousX = this.x;
+    this.previousY = this.y;
+
+    if (this.offScreen() || this.touchingTrackEdges()) {
       this.alive = false;
     }
-  }  
+  }
 
   mutate() {
     this.brain.mutate(0.1);
   }
 
-  getDistanceToHole() {
-    return Math.sqrt((this.x - hole.x) ** 2 + (this.y - hole.y) ** 2);
-  }
-
-  think(hole) {
-    if (!this.alive || this.movesLeft <= 0) return;
-
-    let percentToHole = this.getDistanceToHole() / this.spawnToHoleDistance;
-    this.score = Math.max(0, percentToHole);
-
+  think() {
+    if (!this.alive) return;
+    
     let inputs = [];
-    inputs[0] = this.map(hole.x, 0, canvas.width, 0, 1);
-    inputs[1] = this.map(this.x, 0, canvas.width, 0, 1);
-    inputs[2] = this.map(this.y, 0, canvas.height, 0, 1);
-    inputs[3] = this.map(hole.y, 0, canvas.height, 0, 1);
-    inputs[4] = this.map(percentToHole, 0, 1, 0, 1);
-
-    const angleToHole = Math.atan2(hole.y - this.y, hole.x - this.x) / (2 * Math.PI);
-    inputs[5] = this.map(angleToHole, -1, 1, 0, 1);
-
-    inputs[6] = this.map(this.previousDirection, 0, 360, 0, 1);
-    inputs[7] = this.map(this.previousPower, 0, 100, 0, 1);
-    inputs[8] = this.map(this.score, 0, 1, 0, 1);
+    inputs[0] = this.distanceFromLeftEdge();
+    inputs[1] = this.distanceFromRightEdge();
+    inputs[2] = this.score;
 
     let output = this.brain.predict(inputs);
     this.move(output);
-
-    // Store the current move information
-    this.previousDirection = this.map(output[0], 0, 1, 0, 360);
-    this.previousPower = this.map(output[1], 0, 1, 0, 25); // Adjusted power scaling
+    this.score = Math.floor(this.distanceTraveled / 100);
   }
 
   offScreen() {
     return this.y > canvas.height || this.y < 0 || this.x > canvas.width || this.x < 0;
   }
 
+  touchingTrackEdges() {
+    return this.x - this.radius < this.outerTrack.left ||
+           this.x + this.radius > this.outerTrack.right ||
+           this.y - this.radius < this.outerTrack.top ||
+           this.y + this.radius > this.outerTrack.bottom ||
+           (this.x + this.radius > this.innerTrack.left && this.x - this.radius < this.innerTrack.right &&
+            this.y + this.radius > this.innerTrack.top && this.y - this.radius < this.innerTrack.bottom);
+  }
+
   resetPosition(x, y) {
     this.x = x;
     this.y = y;
-    this.movesLeft = 4;
+    this.previousX = x;
+    this.previousY = y;
     this.alive = true;
+    this.score = 0;
+    this.distanceTraveled = 0;
   }
 
-  calculateOptimalMove(hole) {
-    const dx = hole.x - this.x;
-    const dy = hole.y - this.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    const power = distance / 25;
+  distanceFromLeftEdge() {
+    const leftOuterDistance = this.x - this.outerTrack.left;
+    const leftInnerDistance = this.x - this.innerTrack.left;
+    return this.x < this.innerTrack.left ? leftOuterDistance : leftInnerDistance;
+  }
 
-    return {
-      angle: angle,
-      power: power
-    };
+  distanceFromRightEdge() {
+    const rightOuterDistance = this.outerTrack.right - this.x;
+    const rightInnerDistance = this.innerTrack.right - this.x;
+    return this.x > this.innerTrack.right ? rightOuterDistance : rightInnerDistance;
+  }
+
+  updateDistanceFromEdges() {
+    this.leftDistance = this.distanceFromLeftEdge();
+    this.rightDistance = this.distanceFromRightEdge();
   }
 }

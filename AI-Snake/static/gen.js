@@ -4,7 +4,7 @@ function nextGeneration() {
   let newSnakes = [];
   for (let i = 0; i < TOTAL; i++) {
     let newSnake = pickOne();
-    newSnake.resetPosition(0, 0);
+    newSnake.resetPosition();
     newSnakes.push(newSnake);
   }
   snakes = newSnakes;
@@ -33,9 +33,9 @@ function pickOne() {
 function calculateFitness() {
   let sum = 0;
   for (let snake of savedSnakes) {
-    sum += snake.score;
+    sum += snake.Reward;
   }
   for (let snake of savedSnakes) {
-    snake.fitness = snake.score / sum;
+    snake.fitness = snake.Reward / sum;
   }
 }

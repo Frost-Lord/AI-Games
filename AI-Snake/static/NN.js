@@ -65,14 +65,22 @@ class NeuralNetwork {
       return outputs;
     });
   }
-
   createModel() {
     const model = tf.sequential();
-
-    model.add(tf.layers.dense({units: this.hidden_nodes, activation: 'relu', inputShape: [this.input_nodes]}));
-    model.add(tf.layers.dense({units: this.hidden_nodes, activation: 'relu'}));
-    model.add(tf.layers.dense({units: this.hidden_nodes, activation: 'relu'}));
-    model.add(tf.layers.dense({units: this.output_nodes}));
+    model.add(
+      tf.layers.dense({
+        inputShape: [this.input_nodes],
+        units: this.hidden_nodes,
+        activation: "relu",
+        name: "Dense_1",
+      })
+    );
+    model.add(
+      tf.layers.dense({
+        units: this.output_nodes,
+        name: "Dense_2",
+      })
+    );
     return model;
   }
 }
@@ -81,10 +89,10 @@ function random() {
   return Math.random();
 }
 
-function randomGaussian(mean=0, stdev=1) {
+function randomGaussian(mean = 0, stdev = 1) {
   const u = 1 - Math.random(); // Converting [0,1) to (0,1]
   const v = Math.random();
-  const z = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+  const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
   // Transform to the desired mean and standard deviation:
   return z * stdev + mean;
 }

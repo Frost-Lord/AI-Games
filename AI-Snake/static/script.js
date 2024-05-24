@@ -5,6 +5,7 @@ const scale = 20;
 const rows = canvas.height / scale;
 const columns = canvas.width / scale;
 const TOTAL = 1;
+const Default_Points = 3;
 let GameSpeed = 10; //10 ms
 let snakes = [];
 let savedSnakes = [];
@@ -32,7 +33,7 @@ class Fruit {
   canvas.width = 400;
   canvas.height = 400;
   for (let i = 0; i < TOTAL; i++) {
-    snakes[i] = new Snake();
+    snakes[i] = new Snake(null, scale); // Pass scale to the Snake constructor
   }
   fruit = new Fruit();
 
@@ -41,7 +42,7 @@ class Fruit {
     fruit.draw();
     for (let i = snakes.length - 1; i >= 0; i--) {
       if (snakes[i] && typeof snakes[i].think === 'function') {
-        snakes[i].think(fruit, data = { width: 400, height: 400 });
+        snakes[i].think(fruit, { width: 400, height: 400 });
         snakes[i].update();
         snakes[i].draw(ctx);
 

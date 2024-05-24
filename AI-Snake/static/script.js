@@ -2,7 +2,6 @@ const scale = 20;
 const canvasSize = 400;
 const Default_Points = 5;
 const GameSpeed = 10; // 10 ms
-const TOTAL = 1;
 let snakes = [];
 let savedSnakes = [];
 let generation = 0;

@@ -1,26 +1,29 @@
 class Snake {
   constructor(brain) {
-    this.x = canvas.width / 2;
-    this.y = canvas.height / 2;
+    this.x = 200 / 2;
+    this.y = 200 / 2;
     this.xSpeed = scale;
     this.ySpeed = 0;
     this.Reward = Default_Points;
     this.fitness = 0;
     this.tail = [];
+    this.alive = true;
     this.direction = "East";
-
     this.brain = brain ? brain.copy() : new NeuralNetwork(12, 16, 3);
   }
 
   dispose() {
-    this.brain.dispose();
+    if (this.brain) {
+      this.brain.dispose();
+      this.brain = null;
+    }
   }
 
   mutate() {
     this.brain.mutate(0.1);
   }
 
-  generateData(fruit, canvas) {
+  generateData(fruit) {
     let Danger_Right = 0,
       Danger_Left = 0,
       Danger_Up = 0,
@@ -35,9 +38,9 @@ class Snake {
       Food_South = 0;
 
     // Check for danger - is it 1 step away from the wall
-    if (this.x + scale >= canvas.width) Danger_Right = 1;
+    if (this.x + scale >= 200) Danger_Right = 1;
     if (this.x - scale < 0) Danger_Left = 1;
-    if (this.y + scale >= canvas.height) Danger_Down = 1;
+    if (this.y + scale >= 200) Danger_Down = 1;
     if (this.y - scale < 0) Danger_Up = 1;
 
     // Check for food - is it <direction> from the snake
@@ -73,23 +76,23 @@ class Snake {
     };
   }
 
-  think(fruit, canvas) {
+  think(fruit) {
     let inputs = [];
 
-    let data = this.generateData(fruit, canvas);
+    let data = this.generateData(fruit);
 
-    inputs[0] = data.Danger_Right;
-    inputs[1] = data.Danger_Left;
-    inputs[2] = data.Danger_Up;
-    inputs[3] = data.Danger_Down;
+    inputs[0] = data.Food_West;
+    inputs[1] = data.Food_East;
+    inputs[2] = data.Food_North;
+    inputs[3] = data.Food_South;
     inputs[4] = data.Direction_West;
     inputs[5] = data.Direction_East;
     inputs[6] = data.Direction_North;
     inputs[7] = data.Direction_South;
-    inputs[8] = data.Food_West;
-    inputs[9] = data.Food_East;
-    inputs[10] = data.Food_North;
-    inputs[11] = data.Food_South;
+    inputs[8] = data.Danger_Right;
+    inputs[9] = data.Danger_Left;
+    inputs[10] = data.Danger_Up;
+    inputs[11] = data.Danger_Down;
 
     let output = this.brain.predict(inputs);
     let directions = ["Straight", "Left", "Right"];
@@ -151,9 +154,10 @@ class Snake {
       }
     }
     ctx.fillRect(this.x, this.y, scale, scale);
+    this.update();
   }
 
-  update() {
+  update() { 
     for (let i = 0; i < this.tail.length - 1; i++) {
       this.tail[i] = this.tail[i + 1];
     }
@@ -164,46 +168,63 @@ class Snake {
 
     this.x += this.xSpeed;
     this.y += this.ySpeed;
+
+    this.detectLoop();
   }
 
   outsideCanvas() {
     let result =
-      this.x >= canvas.width ||
+      this.x >= 200 ||
       this.x < 0 ||
-      this.y >= canvas.height ||
+      this.y >= 200 ||
       this.y < 0;
     if (result) {
-      this.Reward = this.Reward - 1;
+      this.Reward -= 1;
+      this.alive = false;
       return true;
     }
     return false;
   }
 
-  checkCollision() {
-    for (let segment of this.tail) {
-      if (segment && this.x === segment.x && this.y === segment.y) {
-        this.Reward = Default_Points;
-        this.tail = [];
-        break;
+  detectLoop() {
+    for (let i = 0; i < this.tail.length - 1; i++) {
+      if (
+        this.tail[i] &&
+        this.x === this.tail[i].x &&
+        this.y === this.tail[i].y
+      ) {
+        this.alive = false;
       }
     }
   }
 
+  checkCollision() {
+    let result = this.outsideCanvas() || !this.alive;
+    for (let segment of this.tail) {
+      if (segment && this.x === segment.x && this.y === segment.y) {
+        this.Reward = Default_Points;
+        this.tail = [];
+        result = true;
+      }
+    }
+    return result;
+  }
+
   eat(fruit) {
     if (this.x === fruit.x && this.y === fruit.y) {
-      this.Reward++;
+      this.Reward += 100;
       return true;
     }
-
     return false;
   }
 
   resetPosition() {
-    this.x = canvas.width / 2;
-    this.y = canvas.height / 2;
+    this.x = 200 / 2;
+    this.y = 200 / 2;
     this.Reward = Default_Points;
     this.xSpeed = scale;
     this.ySpeed = 0;
+    this.alive = true;
     this.direction = "East";
   }
 }

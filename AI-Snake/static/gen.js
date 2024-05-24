@@ -7,11 +7,13 @@ function nextGeneration() {
     newSnake.resetPosition();
     newSnakes.push(newSnake);
   }
-  snakes = newSnakes;
 
-  for (let i = 0; i < savedSnakes.length; i++) {
-    savedSnakes[i].dispose();
-  }
+  snakes.forEach((game, index) => {
+    game.snake = newSnakes[index % newSnakes.length];
+    game.fruit = new Fruit();
+  });
+
+  savedSnakes.forEach(snake => snake.dispose());
   savedSnakes = [];
   generation++;
 }

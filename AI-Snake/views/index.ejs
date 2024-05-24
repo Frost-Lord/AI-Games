@@ -8,7 +8,13 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
 </head>
 <body>
-    <canvas id="gameCanvas"></canvas>
+    <div id="stats">
+        <h2>Game Stats</h2>
+        <p id="topScore">Top Score: 0</p>
+        <p id="averageScore">Average Score: 0</p>
+        <p id="generationCount">Generation: 0</p>
+    </div>
+    <div id="canvasContainer"></div>
     <script src="NN.js"></script>
     <script src="gen.js"></script>
     <script src="snake.js"></script>
